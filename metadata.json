@@ -1,0 +1,6 @@
+{
+  "name": "Sketch2Shape — IntentLock 3D",
+  "description": "Studio-grade 2D hand-drawn sketch to exportable 3D GLB reconstruction pipeline with Gemini multimodal sketch analysis, IntentLock uncertainty confirmation, Observed vs AI-Inferred Design Map, and Tripo 3D API integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
