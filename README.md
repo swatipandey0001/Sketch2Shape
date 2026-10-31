@@ -1,152 +1,370 @@
-# Sketch2Shape — IntentLock 3D
+<div align="center">
 
-**Sketch2Shape — IntentLock 3D** is a full-stack computer vision and 3D reconstruction studio built for **TechZephyr 4.0 (SKETCH2SHAPE AI)**. It converts a user's 2D hand-drawn or uploaded sketch into a validated, interactive, exportable 3D `.GLB` and Wavefront `.OBJ` + `.MTL` model while separating observed 2D stroke evidence from inferred occluded 3D geometry.
+# ✏️ Sketch2Shape — IntentLock 3D
 
----
+### Turn a simple 2D sketch into a real 3D model you can download.
 
-## 1. System Overview & Key Capabilities
+Draw or upload a sketch → AI understands it → you confirm the unclear parts → get a 3D model (`.GLB`, `.OBJ`, `.MTL`).
 
-1. **Interactive Drafting Canvas & Multi-Format Sketch Upload**:
-   - 768 × 576 high-DPI HTML5 drafting canvas with variable brush, eraser, 25-step undo stack, clear, and PNG export.
-   - Drag-and-drop / file picker upload supporting **PNG, JPEG, and WebP** up to 20 MB with both client-side and server-side **magic-byte signature verification** (strictly rejecting disguised SVG/HTML/JSON files and 0-byte uploads).
-2. **Deterministic Computer Vision Preprocessing (`src/utils/sketchPreprocessor.ts`)**:
-   - Composites transparent PNG alpha channels onto pure white (`#FFFFFF`) so transparent backgrounds are never misinterpreted as black ink.
-   - Optional 2D integral-image **illumination flattening** for photographed paper sketches under uneven shadows.
-   - Histogram percentile contrast normalization, tight foreground stroke bounding-box crop, centered `1:1` (`512 × 512`) square padding, measured `W:H` aspect ratio, foreground ink ratio, 2D bilateral symmetry scoring, and 8-connected Moore-neighbor contour & interior hole tracing with Ramer–Douglas–Peucker simplification.
-   - Side-by-side **Original vs CV-Prepared vs Contour Map** visual inspector with zero generative AI replacement of the user's sketch.
-3. **Epistemically Honest Multimodal Sketch Analysis (Google Gemini)**:
-   - Server-side `@google/genai` integration returning a normalized 8-field JSON specification (`object_name`, `visible_components`, `observed_features`, `uncertain_features`, `inferred_features`, `proportions_description`, `material_preferences`, `reconstruction_notes`).
-   - Strictly separates visible 2D stroke facts from hidden/occluded 3D estimates.
-4. **IntentLock Specification Gate (`src/utils/intentCompiler.ts`)**:
-   - Surfaces 0–4 genuine structural ambiguities without forcing filler questions.
-   - Compiles user hints (`objectType`, `material`, `colour`, `style`) and locked IntentLock overrides into concrete downstream parameters (`depthRatio`, `isHollowVessel`, `supportTopology`, `symmetryOverride`, PBR hex swatches, `roughness`, `metalness`, `clearcoat`) and structural blueprint overrides (armrests, leg count/style, backrest slats, vessel handle, shade profile).
-5. **Three-Option Intelligent 3D Reconstruction (`src/utils/modularReconstructor.ts`) + Cloud Tripo v3**:
-   - After Gemini analyses a sketch, Studio synthesizes and previews **three distinct, binary-validated `.GLB` reconstruction concepts** side by side:
-     - **Option A — Sketch Faithful**: Preserves drawn silhouette, proportions, and strictly observed components with minimal hidden-surface assumptions.
-     - **Option B — Structurally Refined**: Completes occluded 3D structural components, under-seat/table aprons, stretchers, harp struts, mounting bosses, and joinery.
-     - **Option C — Design Enhanced**: Refines ergonomic curvature (waterfall seat cushions, lumbar-wrapping backrests, rolled ceramic lips), multi-step chamfers, and metallic hardware ferrules while preserving sketch identity.
-   - **Modular Category-Specific 3D Component Builders (`src/utils/builders/*`)**:
-     - **Chairs & Seating (`chairBuilder.ts`)**: Separate seat pan/cushion, rear `-Z` backrest (solid, curved shell, slatted, or open frame), conditional armrests, 4 straight/splayed legs, tripod, pedestal, sled, or cantilever base, and H-stretchers.
-     - **Tables & Desks (`tableBuilder.ts`)**: Beveled tabletop slab, shadow reveal, perimeter aprons, legs/pedestal/tripod, and trestle cross-bars.
-     - **Mugs & Rotational Vessels (`vesselBuilder.ts`)**: Scanline `LatheGeometry` with hollow cavity wall thickness, foot ring, glazed rim, and swept 3D `TubeGeometry` handle + bosses.
-     - **Lamps (`lampBuilder.ts`)**: Turned weighted base, central stem, bulb socket, physical 3-strut spider/harp support, and hollow double-walled diffuser shade.
-     - **Bookshelves & Cabinets (`shelfBuilder.ts`)**: Left/right vertical uprights, top/bottom decks, horizontal interior shelf tiers aligned to measured horizontal stroke peaks, feet/plinth, and rear anti-racking X-brace.
-     - **Mechanical Brackets & CAD Plates (`bracketBuilder.ts`)**: Exact multi-contour + interior bolt-hole `ExtrudeGeometry`, raised cylindrical mounting bosses, base flange, and stiffener gusset ribs.
-     - **Honest Unsupported Category Handling**: Organic/freeform subjects (animals, portraits, foliage, vehicles) are explicitly flagged as unsupported locally rather than fabricating misleading blocky meshes.
-   - **Cloud Neural Path (`Tripo OpenAPI v3`)**: Verified `POST /v3/files` → `POST /v3/generation/image-to-model` → `GET /v3/tasks/:task_id` when `TRIPO_API_KEY` is configured.
-   - **Limited Raw Contour Extrusion Fallback (`src/utils/sketchTo3DFallback.ts`)**: Retained strictly as an explicitly labelled opt-in fallback.
-6. **Strict Binary GLB Validation & 1:1 `.GLB` / `.OBJ` / `.MTL` Export (`src/utils/glbValidator.ts`)**:
-   - Validates glTF 2.0 magic (`0x46546C67`), version `2`, `declaredLength <= buffer.byteLength`, JSON chunk header (`0x4E4F534A`), finite non-`NaN`/`Infinity` vertex coordinates, non-empty triangle meshes, and precise vertex-level 3D bounding-box volume.
-   - Displays the preserved original 2D sketch and SHA-256 fingerprint side by side with the interactive Three.js studio viewport (`OrbitControls`, wireframe, camera presets, and 3 non-destructive shading modes).
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-3D-black?logo=three.js&logoColor=white)
+![Gemini](https://img.shields.io/badge/Google-Gemini-4285F4?logo=google&logoColor=white)
+![Tripo](https://img.shields.io/badge/Tripo-3D%20API-orange)
+
+Built for **TechZephyr 4.0 — SKETCH2SHAPE AI**
+
+</div>
 
 ---
 
-## 2. End-to-End Pipeline Architecture
+## 📖 Table of Contents
+
+1. [What is this project?](#-what-is-this-project)
+2. [The problem](#-the-problem)
+3. [Our solution](#-our-solution)
+4. [How it works (flowchart)](#-how-it-works-flowchart)
+5. [Architecture](#-architecture)
+6. [Models and APIs used](#-models-and-apis-used)
+7. [The three 3D options](#-the-three-3d-options)
+8. [What objects can it build?](#-what-objects-can-it-build)
+9. [Website pages](#-website-pages)
+10. [Project structure](#-project-structure)
+11. [Run it on your computer](#-run-it-on-your-computer)
+12. [Deploy it online](#-deploy-it-online)
+13. [Troubleshooting](#-troubleshooting)
+14. [Limits (honest list)](#-limits-honest-list)
+
+---
+
+## 💡 What is this project?
+
+**Sketch2Shape** is a website. You give it a flat drawing of an object, like a chair, a table, a mug, a lamp, a bookshelf or a metal bracket. It gives you back a 3D model that you can rotate on screen and download.
+
+The special part is **IntentLock**. A 2D drawing hides many things (for example, the back legs of a chair). Instead of silently guessing, the app **asks you** about the important unclear parts and **locks your answers** before building the 3D model.
+
+---
+
+## 🧩 The problem
+
+Making a 3D model by hand needs special software and a lot of time. Today's AI tools can make 3D from a picture, but they have problems:
+
+| Problem | What goes wrong |
+| :--- | :--- |
+| A sketch only shows one side | The AI guesses the hidden parts and you do not know what it guessed |
+| AI changes your drawing | The result may not look like what you drew |
+| No control | You cannot say "this chair has no armrests" |
+| Cloud-only tools | They need internet and a paid key, and fail if the server is down |
+| No checking | A broken 3D file can be given to you without any warning |
+
+---
+
+## ✅ Our solution
+
+| Our idea | How it helps |
+| :--- | :--- |
+| **Clean the sketch with normal computer vision** | We never let AI repaint your drawing. We only measure it (shape, size, symmetry, holes). |
+| **Separate "seen" from "guessed"** | The app clearly shows what is **visible in your sketch** and what is **guessed by AI**. |
+| **IntentLock** | The app asks you only about the **important** unclear parts and locks your choices. |
+| **Three options** | You get 3 different 3D versions to compare, then you pick the one you like. |
+| **Works without internet AI** | If Tripo or Gemini is not available, a built-in local builder still makes a 3D model. |
+| **Check every file** | Every `.GLB` file is checked before you can download it. |
+
+---
+
+## 🔄 How it works (flowchart)
+
+```mermaid
+flowchart TD
+    A["🖊️ Step 1: Draw on canvas<br/>or upload PNG / JPG / WebP"] --> B["🔐 Save original sketch<br/>(SHA-256 fingerprint)"]
+    B --> C["🧹 Step 2: Clean the sketch in the browser<br/>white background, contrast, crop, contours"]
+    C --> D{"Is Gemini<br/>available?"}
+    D -- "Yes" --> E["🤖 Step 3: Gemini reads the sketch<br/>object name, visible parts, unclear parts"]
+    D -- "No / error" --> F["📐 Local analysis<br/>uses CV measurements + your hints"]
+    E --> G["🔒 Step 4: IntentLock<br/>you answer the unclear questions"]
+    F --> G
+    G --> H["🧱 Step 5: Build 3 options<br/>A Faithful, B Refined, C Enhanced"]
+    G --> T["☁️ Or send to Tripo<br/>(cloud AI 3D, optional)"]
+    H --> I["👀 Step 6: Compare 3D previews<br/>and pick one"]
+    T --> J
+    I --> J["✅ Check the 3D file<br/>valid GLB, no broken numbers"]
+    J --> K["📦 Step 7: View and download<br/>.GLB  .OBJ  .MTL"]
+```
+
+### The same flow in plain words
+
+1. **Draw or upload.** Use the drawing canvas or upload an image (up to 20 MB).
+2. **Clean up.** The browser fixes the background, boosts contrast, crops the drawing and finds the outline and any holes.
+3. **Understand.** Gemini names the object and lists what it can see and what it is unsure about.
+4. **Confirm.** IntentLock asks only the questions that really matter (0 to 4 questions).
+5. **Build.** The app builds three 3D versions from your answers.
+6. **Pick.** You rotate and compare them, then choose one.
+7. **Check and download.** The file is validated, then you can download it.
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    subgraph Browser["🖥️ Browser (React + Three.js)"]
+        UI["Studio UI<br/>Canvas, Upload, IntentLock"]
+        CV["CV Preprocessor<br/>sketchPreprocessor.ts"]
+        IC["Intent Compiler<br/>intentCompiler.ts"]
+        MR["Modular 3D Builders<br/>chair, table, mug, lamp,<br/>shelf, bracket"]
+        FB["Contour Extrusion Fallback<br/>sketchTo3DFallback.ts"]
+        VAL["GLB Validator<br/>glbValidator.ts"]
+        VW["3D Viewer<br/>OrbitControls"]
+    end
+
+    subgraph Server["⚙️ Node.js + Express (server.ts)"]
+        API1["POST /api/sketch/analyze"]
+        API2["POST /api/tripo/generate"]
+        API3["GET /api/tripo/tasks/:id"]
+        API4["GET /api/system/status<br/>GET /api/health"]
+        ENV[("🔑 .env<br/>API keys stay here")]
+    end
+
+    subgraph Cloud["☁️ External services"]
+        GEM["Google Gemini<br/>vision analysis"]
+        TRI["Tripo 3D API v3<br/>image to 3D"]
+    end
+
+    UI --> CV --> IC --> MR --> VAL --> VW
+    CV --> FB --> VAL
+    UI -- "sketch image" --> API1 --> GEM
+    UI -- "sketch + intent" --> API2 --> TRI
+    UI -- "poll status" --> API3 --> TRI
+    ENV -.-> API1
+    ENV -.-> API2
+```
+
+### Why this design?
+
+- **API keys never reach the browser.** Only the Express server reads `GEMINI_API_KEY` and `TRIPO_API_KEY`.
+- **Most work happens in the browser.** Cleaning the sketch and building the local 3D takes milliseconds and needs no internet.
+- **One server does two jobs.** In development, Express also runs Vite. In production, Express serves the built `dist/` folder.
+- **The server never answers `/api/*` with a web page.** Any unknown API path returns JSON, so the app can tell real errors from proxy or warm-up pages.
+
+### Error handling (so the app does not just break)
+
+```mermaid
+flowchart TD
+    R["Browser calls /api/..."] --> S{"What came back?"}
+    S -- "JSON ok" --> OK["Use the result ✅"]
+    S -- "JSON error" --> ERR["Show a clear message<br/>(bad key, bad image, quota...)"]
+    S -- "HTML page / 502 / 503 / 504" --> RT["Retry up to 3 times<br/>wait 1.5s, 3s, 6s"]
+    RT --> S2{"Still HTML?"}
+    S2 -- "No" --> OK
+    S2 -- "Yes" --> FB["Show help + offer the<br/>offline local 3D options"]
+```
+
+---
+
+## 🧠 Models and APIs used
+
+| Part | Tool | What it does |
+| :--- | :--- | :--- |
+| **Sketch understanding** | **Google Gemini** via `@google/genai`. Main model: `gemini-3.8-flash`. Backup model: `gemini-3.1-flash-lite`. | Looks at the sketch and returns a structured result: object name, visible parts, unclear parts, guessed parts, proportions and notes. If the main model is busy, it retries and then uses the backup. |
+| **Cloud 3D (optional)** | **Tripo 3D OpenAPI v3**, model `v3.1-20260211` | Turns the sketch image into a textured 3D model on Tripo's servers. Steps: upload file, create task, poll until done. |
+| **Local 3D (no key needed)** | **Three.js** shapes: `ExtrudeGeometry`, `LatheGeometry`, `TubeGeometry` | Builds chairs, tables, mugs, lamps, shelves and brackets from measured sketch data. |
+| **Computer vision** | Our own code, no AI model | Alpha compositing, illumination flattening, contrast normalisation, contour tracing, symmetry score. |
+| **3D viewing and export** | **Three.js** (`GLTFLoader`, `GLTFExporter`, `OrbitControls`) | Interactive viewer and file export. |
+
+> The Gemini and Tripo keys are **server-side only**. Gemini keys that start with `AQ.` (the new format) and the older `AIza...` format both work with the official SDK.
+
+---
+
+## 🎛️ The three 3D options
+
+After analysis, the app builds three different 3D models so you can choose.
+
+| Option | Name | Idea |
+| :--- | :--- | :--- |
+| **A** | **Sketch Faithful** | Stays as close as possible to what you drew. Fewest guesses. |
+| **B** | **Structurally Refined** | Adds the hidden parts that make it a believable object (aprons, stretchers, supports, joints). |
+| **C** | **Design Enhanced** | Improves the look: smoother curves, bevels, metal fittings. Keeps the identity of your sketch. |
+
+---
+
+## 🪑 What objects can it build?
+
+| Category | What is built |
+| :--- | :--- |
+| 🪑 **Chairs and seating** | Seat, backrest (solid, curved, slatted or open), optional armrests, legs (straight, splayed, tripod, pedestal), stretchers |
+| 🛋️ **Tables and desks** | Beveled top, aprons, legs or pedestal, cross bars |
+| ☕ **Mugs and vessels** | Hollow body turned on a lathe, foot ring, rim, 3D handle |
+| 💡 **Lamps** | Base, stem, socket, support struts, hollow shade |
+| 📚 **Bookshelves and cabinets** | Side panels, top and bottom, shelves placed where your lines were, back brace |
+| 🔩 **Brackets and plates** | Exact outline with holes, raised bosses, base flange, ribs |
+| 🐶 **Animals, faces, plants, vehicles** | Not supported by the local builder. The app says so honestly. Use the Tripo cloud option for these. |
+
+---
+
+## 🌐 Website pages
+
+| Page | Purpose |
+| :--- | :--- |
+| **Dashboard** | Home screen of the app |
+| **Studio** | The main workspace: draw, analyse, confirm, build, view, download |
+| **History** | Your earlier results, saved in your own browser |
+| **Diagnostics** | Test the server, keys and error handling |
+| **Documentation** | Technical notes inside the app |
+
+### Main features in the Studio
+
+- Drawing canvas with brush, eraser, undo (25 steps), clear and PNG export
+- Upload checks that read the real file type (a fake `.png` that is really HTML is rejected)
+- Side-by-side view: **Original**, **Cleaned**, **Contour map**
+- Hints box: object type, material, colour, style
+- **Observed vs Guessed** map of the design
+- Interactive 3D viewer: rotate, zoom, wireframe, clay view, material preview
+- Downloads: `.GLB`, `.OBJ` and `.MTL`
+- Original sketch fingerprint (SHA-256) to prove it was never changed
+
+---
+
+## 📁 Project structure
 
 ```text
-[2D Canvas / PNG·JPG·WebP Upload]
-        │  (SHA-256 Fingerprinted Original Bytes Preserved)
-        ▼
-[01B. Deterministic CV Preprocessor (Browser)]
-  ├─ Alpha-on-#FFFFFF compositing + optional shadow flattening
-  ├─ Tight stroke BBox, horizontal stroke peaks, W:H & symmetry metrics
-  └─ 8-connected outer & hole polygon contour extraction
-        │
-        ▼
-[02. POST /api/sketch/analyze (Express + @google/genai)]
-  ├─ Primary: gemini-3.8-flash (ThinkingLevel.LOW, structured spatial schema)
-  ├─ Fallback: gemini-3.1-flash-lite (bounded backoff + jitter)
-  └─ Observed vs Inferred Design Map + Category & Structural Blueprint
-        │
-        ▼
-[03. IntentLock Gate + Three-Option 3D Synthesis]
-  ├─ Option A: Sketch Faithful (Interactive 3D GLB Preview)
-  ├─ Option B: Structurally Refined (Interactive 3D GLB Preview)
-  └─ Option C: Design Enhanced (Interactive 3D GLB Preview)
-        │  (User compares all 3 options & clicks "Select This Design")
-        ▼
-[04. Selected 3D Model Studio Viewport + Original Sketch Verification]
-  ├─ Side-by-side Original 2D Sketch + SHA-256 integrity verification
-  ├─ Orbit, Zoom, Pan, Wireframe & Material Inspection
-  └─ Unmutated 1:1 Source Scale .GLB, .OBJ & .MTL Exports
+Sketch2Shape/
+├── server.ts                  # Express server: API routes, Gemini, Tripo
+├── src/
+│   ├── App.tsx                # Main app and Studio logic
+│   ├── components/            # UI pieces (canvas, panels, 3D viewer, pages)
+│   ├── types/studio.ts        # Shared TypeScript types
+│   └── utils/
+│       ├── apiClient.ts       # Safe JSON reading + automatic retry
+│       ├── sketchPreprocessor.ts   # Computer vision cleanup
+│       ├── intentCompiler.ts       # Turns your answers into build settings
+│       ├── modularReconstructor.ts # Builds the 3 options
+│       ├── sketchTo3DFallback.ts   # Limited raw contour extrusion
+│       ├── glbValidator.ts         # Checks and exports 3D files
+│       ├── historyStore.ts         # Saves history in the browser
+│       └── builders/               # chair, table, vessel, lamp, shelf, bracket
+├── scripts/run-tests.ts       # Automated tests
+├── .env.example               # Example settings (copy to .env)
+└── package.json
 ```
 
 ---
 
-## 3. Environment Variables & Setup
+## 🚀 Run it on your computer
 
-All secrets remain strictly server-side in `server.ts` and are never exposed in client bundles. Copy `.env.example` to `.env` (or configure secrets in AI Studio **Settings > Secrets**):
+### You need
 
-| Variable | Required | Default | Purpose |
-| :--- | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | **Yes** (for Vision Audit) | — | Authenticates server-side `@google/genai` multimodal sketch spatial analysis. |
-| `TRIPO_API_KEY` | **Optional** | `""` | Developer token (`tsk_...` from `platform.tripo3d.ai`) for cloud Tripo v3 neural reconstruction. |
-| `TRIPO_MODEL_VERSION` | Optional | `v3.1-20260211` | Verified Tripo OpenAPI v3 model identifier (`v3.1-20260211`, `v3.0-20250812`, `P1-20260311`, or `Turbo-v1.0-20250506`). |
-| `PORT` | Optional | `3000` | HTTP server port for Express + Vite/static bundle. |
+- **Node.js 20 or newer** → https://nodejs.org (LTS version)
+- A **Gemini API key** → https://aistudio.google.com/apikey
+- A **Tripo API key** (optional) → https://platform.tripo3d.ai
 
----
+### Steps
 
-## 4. Exact Commands (Install, Dev, Test, Build, Production)
+**1. Install packages**
 
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Start full-stack development server on http://localhost:3000
-npm run dev
-
-# 3. Type-check frontend and backend TypeScript
-npm run lint
-
-# 4. Run the 12-suite automated verification runner (server should be running on :3000 for HTTP upload tests)
-npm test
-
-# 5. Build production frontend bundle into dist/
-npm run build
-
-# 6. Run production server
-npm start
 ```
 
+> If you see a peer-dependency error about `esbuild`, make sure `package.json` has `"esbuild": "^0.28.0"`, or run `npm install --legacy-peer-deps`.
+
+**2. Create your `.env` file** (copy `.env.example` and fill it in)
+
+```env
+GEMINI_API_KEY="your_gemini_key"
+TRIPO_API_KEY="tsk_your_tripo_key"
+TRIPO_MODEL_VERSION="v3.1-20260211"
+```
+
+**3. Start the app**
+
+```bash
+npm run dev
+```
+
+**4. Open** http://localhost:3000
+
+**5. Check that keys are loaded:** open http://localhost:3000/api/system/status
+
+```json
+{ "geminiConfigured": true, "tripoConfigured": true }
+```
+
+### Environment variables
+
+| Variable | Needed? | Purpose |
+| :--- | :--- | :--- |
+| `GEMINI_API_KEY` | Yes, for AI analysis | Sketch understanding with Gemini |
+| `TRIPO_API_KEY` | Optional | Cloud 3D with Tripo. Without it, the local builders are used. |
+| `TRIPO_MODEL_VERSION` | Optional | Defaults to `v3.1-20260211` |
+| `PORT` | Optional | Defaults to `3000` |
+
+### Useful commands
+
+| Command | What it does |
+| :--- | :--- |
+| `npm run dev` | Start the development server |
+| `npm run build` | Build the website into `dist/` |
+| `npm start` | Run the production server (build first) |
+| `npm run lint` | Check TypeScript types |
+| `npm test` | Run the automated tests (start `npm run dev` first for the upload tests) |
+
 ---
 
-## 5. Model, API & Library Attribution
+## ☁️ Deploy it online
 
-- **Google Gemini API (`@google/genai` `^2.32.0`)**:
-  - Primary model: `gemini-3.8-flash` (`ThinkingLevel.LOW`, multimodal spatial & structural blueprint extraction).
-  - Automatic fallback model: `gemini-3.1-flash-lite` with bounded exponential backoff + random jitter.
-- **Tripo 3D OpenAPI v3 (`https://openapi.tripo3d.ai/v3`)**:
-  - `POST /v3/files`, `POST /v3/generation/image-to-model` (`model: "v3.1-20260211"`), `GET /v3/tasks/:task_id`, and `X-Tripo-Trace-ID` diagnostic mapping.
-- **Three.js (`three` `^0.187.0`)**:
-  - `GLTFLoader`, `DRACOLoader`, `GLTFExporter`, `OrbitControls`, `RoomEnvironment`, `ExtrudeGeometry`, `LatheGeometry`, `TubeGeometry`, `MeshStandardMaterial`, `MeshPhysicalMaterial`.
-- **Backend & UI**: Node.js, Express `^4.21.2`, Multer `^2.5.0` (memory storage + magic-byte inspection), React 19, Tailwind CSS v4, Lucide Icons.
+This app needs a **Node.js server**, so use a host that runs Node (Render, Railway, Fly.io, Cloud Run). **Static-only hosts will not work**, because `/api/*` would have no server behind it.
 
----
+### Example: Render
 
-## 6. Hardware, Runtime & Latency Benchmarks
+1. Push this repo to GitHub. Never commit `.env`. It is already in `.gitignore`.
+2. On https://render.com choose **New → Web Service** and pick this repo.
+3. Use these settings:
 
-- **Local Hardware Requirements**: Runs on any standard x64/ARM64 laptop or desktop CPU with a WebGL-capable browser. No local discrete GPU or CUDA installation is required. Software WebGL environments (SwiftShader / llvmpipe / headless Chromium) are automatically detected to disable expensive shadow maps and adapt frame pacing.
-- **Typical Measured Runtimes**:
-  - Deterministic CV Preprocessing & Contour Tracing: **8 – 45 ms** (client CPU)
-  - Gemini Multimodal Vision Audit (`gemini-3.1-flash-lite`): **1.5 – 5.0 s**
-  - Offline Contour 3D Mesh Synthesis & Binary `.GLB` Validation: **15 – 90 ms** (client CPU)
-  - Tripo OpenAPI v3 Cloud Neural Reconstruction: **25 – 90 s** (async GPU queue, 180 s timeout)
+| Setting | Value |
+| :--- | :--- |
+| Runtime | Node |
+| Build command | `npm install --include=dev && npm run build` |
+| Start command | `npm start` |
 
----
+4. Add environment variables: `GEMINI_API_KEY`, `TRIPO_API_KEY`, `TRIPO_MODEL_VERSION`, and `NODE_VERSION=22`.
+5. Deploy, then open `/api/system/status` on your live URL to confirm both keys are loaded.
 
-## 7. Known Limitations & Honest Engineering Boundaries
+> Free servers go to sleep when unused. The first request can take up to a minute. The app retries automatically, so you do not need to click again.
 
-1. **Offline Contour Fallback vs Neural 3D Synthesis**: The local offline fallback generates genuine volumetric 3D meshes (`ExtrudeGeometry` / `LatheGeometry`) directly from extracted 2D contours, interior holes, and IntentLock depth/support rules. While faithful to silhouette geometry and measurable 3D depth, it is an algorithmic CAD-style reconstructor rather than a neural diffusion model and cannot invent fine organic surface sculpting (such as fabric creases or facial features).
-2. **Broken or Ultra-Faint Pencil Lines**: Open or disconnected sketch outlines cannot enclose interior holes cleanly unless strokes meet; bold closed silhouettes or enabling *Flatten uneven paper lighting* on photographed paper sketches produce the best contour meshes.
-3. **Single-Viewpoint Ambiguity**: A single 2D sketch inherently occludes rear geometry; IntentLock captures high-impact structural choices (depth ratio, hollow cavity, leg topology), while Tripo v3's `/v3/generation/image-to-model` endpoint conditions strictly on image pixels plus alignment flags (`texture_alignment`), with custom materials previewed non-destructively in Three.js (`User Material Preview`) and exported via `.MTL`.
+> Anyone with your link can use your Gemini and Tripo credits. Set a budget or quota alert before sharing the link widely.
 
 ---
 
-## 8. Reproducible Judge Verification Steps
+## 🛠️ Troubleshooting
 
-1. **Automated Suite**: With `npm run dev` running, execute `npm test` to verify all 9 deterministic test suites (fresh asymmetric sketches, mug lathe+handle & table IntentLock depth modulation, transparent PNG compositing, noisy shadow illumination flattening, empty/invalid upload guards, disguised SVG/HTML/JSON magic-byte rejection, truncated GLB rejection, `NaN` vertex rejection, and 1:1 `.GLB` vs `.OBJ`/`.MTL` scale parity).
-2. **Interactive Fresh Sketch Test (Zero `TRIPO_API_KEY` Required)**:
-   - Open `http://localhost:3000`, click **Blank Drafting Canvas**, and draw any fresh asymmetric closed shape (or click **Upload PNG / JPG / WebP**).
-   - Inspect **01B. Deterministic CV Sketch Preparation** (`Compare Both`, `1:1 White Pad`, `Contours & BBox`).
-   - Enter optional hints (e.g., Material: `Cobalt glazed ceramic`, Colour: `#1e40af`), click **Analyse Sketch & Build Design Map**, confirm/override an option in **03. IntentLock**, and click **Offline Contour 3D Reconstruction**.
-   - In the **3D Studio Viewport**, switch between `Original Reconstruction`, `User Material Preview`, and `Clay / Topology Inspection`, toggle `2D Sketch` comparison, and click **Download .GLB**, **Export .OBJ**, and **.MTL**.
+| Message | What to do |
+| :--- | :--- |
+| **Server Returned HTML Instead of JSON** | The Node server is not running, or a host or proxy is serving only static files. Open `/api/health`. You should see JSON. Run with `npm run dev`. |
+| **Gemini API Key Not Configured** | `.env` is missing or not loaded. Check the file name is exactly `.env`, it is next to `server.ts`, and you restarted the server. |
+| **API key not valid** | The key value is wrong or still the placeholder text. Copy the key again from AI Studio. |
+| **`npm` is not recognized (Windows)** | Install Node.js, then open a new PowerShell window. |
+| **Scripts are disabled (PowerShell)** | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` or use `npm.cmd`. |
+| **429 / quota** | You hit the free Gemini limit. Wait a minute and try again. |
+| **Port already in use** | Run `npm run dev -- --port 3001`. |
+
+If Gemini is not working, you can still use **Compare 3 Modular 3D Options (Local CV + Hints)** or **Limited Raw Contour Extrusion**. Both work offline.
+
+---
+
+## ⚠️ Limits (honest list)
+
+- One sketch shows only one view, so hidden sides are **estimates**. IntentLock helps, but it cannot see what is not drawn.
+- The local builder makes clean CAD-style models. It **cannot** invent organic detail such as faces or cloth folds. Tripo is better for that.
+- Thin, broken or very faint lines can merge during cleanup. Bold, closed outlines work best. For photos of paper, turn on **Flatten uneven paper lighting**.
+- Tripo builds from image pixels. Your material and colour choices are shown as a preview in the viewer and saved in the `.MTL` file. They are not sent to Tripo as text.
+- Tripo can take 25 to 90 seconds, with a 180-second timeout.
+
+---
+
+<div align="center">
+
+**Sketch2Shape — IntentLock 3D**
+*Draw it. Confirm it. Download it in 3D.*
+
+</div>
