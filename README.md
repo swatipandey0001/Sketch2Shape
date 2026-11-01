@@ -36,6 +36,8 @@ Built for **TechZephyr 4.0 — SKETCH2SHAPE AI**
 13. [Troubleshooting](#-troubleshooting)
 14. [Limits (honest list)](#-limits-honest-list)
 
+Also see: [Expected inputs and outputs](#-expected-inputs-and-outputs) · [Time, hardware and resources](#-time-required-hardware-and-resources) · [Reproducibility](#-reproducibility)
+
 ---
 
 ## 💡 What is this project?
@@ -336,6 +338,73 @@ This app needs a **Node.js server**, so use a host that runs Node (Render, Railw
 
 ---
 
+## 📥📤 Expected inputs and outputs
+
+| | Details |
+| :--- | :--- |
+| **Input** | A 2D sketch: draw on the built-in canvas (768 × 576) **or** upload a PNG, JPG or WebP file (max 20 MB). Optional hints: object type, material, colour, style. |
+| **Checks on input** | The file type is checked by its real bytes, so a fake `.png` that is really HTML, SVG or JSON is rejected. Empty files are rejected too. |
+| **Output** | A 3D model as **`.GLB`**, plus **`.OBJ`** and **`.MTL`** (materials). The viewer shows it live, and the original sketch fingerprint (SHA-256) is shown beside it. |
+| **Output checks** | Every GLB is validated before download: correct glTF 2.0 header, declared length, JSON chunk, finite vertex numbers, non-empty triangles, and a real 3D volume. |
+
+### Example input and output files
+
+Example files are in the [`samples/`](samples) folder:
+
+```text
+samples/
+├── input_sketch.png     # example input sketch
+├── output_model.glb     # generated 3D model
+├── output_model.obj     # same model, OBJ format
+└── output_model.mtl     # materials for the OBJ
+```
+
+---
+
+## ⏱️ Time required, hardware and resources
+
+Most of the work runs in the browser and on hosted APIs, so **no GPU and no model weights are needed on your machine**.
+
+| Stage | Where it runs | Typical time |
+| :--- | :--- | :--- |
+| Sketch cleanup and contour tracing | Your browser (CPU) | about 8 to 45 ms |
+| Gemini sketch analysis | Google Gemini API | about 1.5 to 5 seconds |
+| Local 3D build and GLB check (3 options or contour fallback) | Your browser (CPU) | about 15 to 90 ms per model |
+| Tripo cloud 3D (optional) | Tripo servers | about 25 to 90 seconds (we stop waiting after 180 seconds) |
+
+> These are typical values from the app's own stage timers. Times change with the image, the network and API load. Your own timings are saved in the **History** page for each run.
+
+**Hardware used**
+
+- **Development machine:** a normal Windows laptop or desktop with Node.js. No discrete GPU or CUDA.
+- **Browser:** any WebGL-capable browser. The viewer lowers shadow quality by itself on software rendering.
+- **Hosting:** a small Render web service (free tier, shared CPU and limited memory). The first request after sleep can take up to a minute.
+- **Compute used for AI:** Google Gemini and Tripo run on their own servers. We only send them the sketch image.
+
+---
+
+## 🔁 Reproducibility
+
+| Item | Details |
+| :--- | :--- |
+| **Runtime** | Node.js 20 or newer, npm |
+| **Main dependencies** | React 19, Express 4, Three.js, `@google/genai`, Multer, Tailwind CSS 4, Vite, TypeScript (all listed in `package.json`) |
+| **Install** | `npm install` (if npm reports an `esbuild` peer conflict, keep `"esbuild": "^0.28.0"` in `package.json`) |
+| **Model weights** | **None to download.** All AI models are used through hosted APIs. |
+| **External services** | Google Gemini API (needed for AI analysis) and Tripo 3D API (optional) |
+| **Configuration** | `.env` file with `GEMINI_API_KEY`, optional `TRIPO_API_KEY` and `TRIPO_MODEL_VERSION` (see `.env.example`) |
+| **Run** | `npm run dev` then open http://localhost:3000 |
+| **Without any keys** | The local builders and the raw contour fallback still produce a GLB, so a run can be reproduced without paid services. |
+| **Tests** | `npm test` runs the automated checks (start `npm run dev` first for the upload tests) |
+
+**Why these models?**
+
+- **Gemini** reads a sketch and returns structured data (object name, visible parts, unclear parts), which IntentLock needs. A smaller backup model is used if the main one is busy.
+- **Tripo** is a cloud image-to-3D model, useful for organic shapes that our local builders cannot make.
+- **Three.js local builders** make clean, checkable CAD-style models with no key, no cost and no waiting.
+
+---
+
 ## 🛠️ Troubleshooting
 
 | Message | What to do |
@@ -359,6 +428,17 @@ If Gemini is not working, you can still use **Compare 3 Modular 3D Options (Loca
 - Thin, broken or very faint lines can merge during cleanup. Bold, closed outlines work best. For photos of paper, turn on **Flatten uneven paper lighting**.
 - Tripo builds from image pixels. Your material and colour choices are shown as a preview in the viewer and saved in the `.MTL` file. They are not sent to Tripo as text.
 - Tripo can take 25 to 90 seconds, with a 180-second timeout.
+
+### Problems you may meet when generating a model
+
+| Problem | Why it happens | What to do |
+| :--- | :--- | :--- |
+| Slow first request | Free hosting sleeps when unused | Wait up to a minute. The app retries by itself. |
+| "Server returned HTML instead of JSON" | A proxy or warm-up page answered, not the API | Wait and retry, or use the local options |
+| Gemini quota or key errors | Free limits, or a wrong key | Wait a minute, or create a new key |
+| Animals, faces, plants, vehicles | The local builder does not support organic shapes | Use the Tripo cloud option |
+| Model looks thin or merged | Faint or broken sketch lines | Use bold, closed outlines and turn on paper-light flattening |
+| Tripo task fails or times out | Queue load or credits | Retry, or use the local 3 options |
 
 ---
 
