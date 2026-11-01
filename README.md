@@ -2,10 +2,12 @@
 
 # ✏️ Sketch2Shape — IntentLock 3D
 
-# Live Link :- https://sketch2shape.onrender.com/
-# Demo video link :- https://youtu.be/p_B2MfFig6Q
-
 ### Turn a simple 2D sketch into a real 3D model you can download.
+
+🌐 **Live site:** [https://sketch2shape.onrender.com/](https://sketch2shape.onrender.com/)
+🎥 **Demo video:** [https://youtu.be/p_B2MfFig6Q](https://youtu.be/p_B2MfFig6Q)
+💻 **Source code:** [github.com/swatipandey0001/Sketch2Shape](https://github.com/swatipandey0001/Sketch2Shape)
+👥 **Team:** pandaysaurabh874 — Swati Pandey, Shivam Dwivedi
 
 Draw or upload a sketch → AI understands it → you confirm the unclear parts → get a 3D model (`.GLB`, `.OBJ`, `.MTL`).
 
@@ -354,13 +356,14 @@ This app needs a **Node.js server**, so use a host that runs Node (Render, Railw
 
 Example files are in the [`samples/`](samples) folder:
 
-```text
-samples/
-├── input_sketch.png     # example input sketch
-├── output_model.glb     # generated 3D model
-├── output_model.obj     # same model, OBJ format
-└── output_model.mtl     # materials for the OBJ
-```
+| Input sketch | Generated 3D model |
+| :--- | :--- |
+| `wooden chair png.png` | `a_wooden_chair.glb` |
+| `apple png.png` | `an_apple.glb` |
+| `bedside-lamp-drawing.webp` | `table_lamp.glb` |
+| *(drawn on the canvas)* | `a_coffee_mug.glb` |
+
+Open any `.glb` file in an online viewer such as https://gltf-viewer.donmccurdy.com, or in Blender, to inspect it.
 
 ---
 
