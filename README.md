@@ -2,6 +2,9 @@
 
 # ✏️ Sketch2Shape — IntentLock 3D
 
+# Live Link :- https://sketch2shape.onrender.com/
+# Demo video link :- https://youtu.be/p_B2MfFig6Q
+
 ### Turn a simple 2D sketch into a real 3D model you can download.
 
 Draw or upload a sketch → AI understands it → you confirm the unclear parts → get a 3D model (`.GLB`, `.OBJ`, `.MTL`).
